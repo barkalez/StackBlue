@@ -1,0 +1,60 @@
+
+https://try.github.io/levels/1/challenges/1
+
+git init
+
+******************************************************************************
+¡Buen trabajo! Como Git nos acaba de decir, nuestro directorio "Nombre
+directorio" ahora tiene un repositorio vacío en /.git/. El repositorio es un
+directorio oculto donde opera Git.
+******************************************************************************
+
+git status
+
+******************************************************************************
+El estado actual de nuestro proyecto, nos sale 3 directorios (en rojo) untracked (sin
+seguimiento) esto quiere decir que son nuevos en el repositorio GIT
+*******************************************************************************
+
+      e.j:
+          On branch master
+
+          Initial commit
+
+          Untracked files:
+          (use "git add <file>..." to include in what will be committed)
+
+            Diagrama Conexionado/
+            Fuentes Arduino/
+            Utilidades/
+
+            nothing added to commit but untracked files present (use "git add" to track)
+
+git add "Nombre del archivo o directorio"
+
+******************************************************************************
+Añade los directorios o archivos untracked al área de ensayo. Tambien se pueden usar
+comodines tales como "git add '*.txt'"
+******************************************************************************
+
+git status
+
+******************************************************************************
+Ahora nos salen todos los archivos que se han incluido en la zona de ensayo en verde
+y en rojo los nuevos
+******************************************************************************
+
+git commit -m "Nombre referente al commit"
+
+******************************************************************************
+Un commit recoge todos los archivos que están en el área de ensayo y los agrupa
+en un commit para agregarloa al repositorio GIT
+******************************************************************************
+
+git log
+
+******************************************************************************
+Afortunadamente para nosotros, hay git log. Piense en el registro de Git como
+un diario que recuerda todos los cambios que hemos cometido hasta ahora, en el
+orden en que los cometimos.
+******************************************************************************
