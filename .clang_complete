@@ -1,10 +1,10 @@
 -I/home/fernando/.platformio/packages/framework-arduinoavr/cores/arduino
 -I/home/fernando/.platformio/packages/framework-arduinoavr/variants/eightanaloginputs
--I/home/fernando/Proyecto StackBlue/src
--I/home/fernando/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SoftwareSerial/src
+-I/home/fernando/Proyectos/StackBlue/src
 -I/home/fernando/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/EEPROM/src
 -I/home/fernando/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/HID/src
 -I/home/fernando/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SPI/src
+-I/home/fernando/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SoftwareSerial/src
 -I/home/fernando/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/Wire/src
 -I/home/fernando/.platformio/packages/framework-arduinoavr/libraries/Adafruit_CircuitPlayground
 -I/home/fernando/.platformio/packages/framework-arduinoavr/libraries/Adafruit_CircuitPlayground/utility

@@ -25,8 +25,9 @@ SoftwareSerial BT(10,11);    // Definimos los pines RX y TX del Arduino conectad
 
 void setup()
 {
-  BT.begin(9600);       // Hay que poner 38400 Baudios si entramos en modo AT-2, y si no hay que poner la velocidad con la que se configuró la última vez, en éste caso 9600. 
+  BT.begin(115200);       // Hay que poner 38400 Baudios si entramos en modo AT-2, y si no hay que poner la velocidad con la que se configuró la última vez, en éste caso 9600. 
   Serial.begin(9600);   // Inicializamos  el puerto serie
+  
 }
 
 void loop()
