@@ -59,8 +59,7 @@ AUTOR: Barkalez
 /****************************************************************
 ------------------------Constantes-------------------------------
 ****************************************************************/
-
-
+//Parámetros recibidos por Bluetooth
 #define TK_POSICIONSTART       0
 #define TK_POSICIONEND         1
 #define TK_NUMPHOTOS           2
@@ -76,7 +75,7 @@ AUTOR: Barkalez
 #define TK_SAVEPSOTION         12
 #define TK_MICROSTEP           13
 #define TK_ENERGYMOTOR         14
-#define TK_COMANDO             15
+#define TK_COMANDO             15  
 #define NUMTOKENS              16
 
 #define LEN_CADENA              1024
