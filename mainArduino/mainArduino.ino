@@ -2,11 +2,9 @@
 FECHA: 17/06/2017
 AUTOR: Barkalez
 */
-//Puta
 /****************************************************************
 -------------------------------INFO------------------------------
-****************************************************************/
-/*
+*****************************************************************
   Repository:
         https://github.com/barkalez/StackBlueV5
   Motor used:
@@ -32,186 +30,145 @@ AUTOR: Barkalez
         Intensidad máxima       2A            2.5A
         Tensión máxima          35V           45A
         Microsteps            16            32
-
-         https://www.luisllamas.es/motores-paso-paso-arduino-driver-a4988-drv8825/
-*/
 /****************************************************************
 ------------------------Urls de interest-------------------------
-****************************************************************/
-/*
-    1-.
-
-    https://www.luisllamas.es/motores-paso-paso-arduino-driver-a4988-drv8825/
-
-  2-.
-    https://github.com/barkalez/StackBlueV5
-
-*/
+****************************************************************
+    1-. https://www.luisllamas.es/motores-paso-paso-arduino-driver-a4988-drv8825/
+   2-.  https://github.com/barkalez/StackBlueV5
 /****************************************************************
 ------------------------Librarys-------------------------------
 ****************************************************************/
-
 #include <SoftwareSerial.h>        //Incluye library SoftwareSerial.h (Conexión Bluetooth)
 #include <string.h>                //Incluye library string.h
 #include <EEPROM.h>
 #include <math.h>
-
 /****************************************************************
 ------------------------Constantes-------------------------------
 ****************************************************************/
 //Parámetros recibidos por Bluetooth
-#define TK_POSICIONSTART       0
-#define TK_POSICIONEND         1
-#define TK_NUMPHOTOS           2
-#define TK_FACTORACELERATION   3
-#define TK_VEL_INICIAL         4
-#define TK_VEL_FINAL           5
-#define TK_TIMEBEFORESHOOT     6
-#define TK_TIMEAFTERSHOOT      7
-#define TK_SPEEDMOTOR          8
-#define TK_DIRMOTOR            9
-#define TK_NUMSTEP             10
-#define TK_GOPOSITION          11
-#define TK_SAVEPSOTION         12
-#define TK_MICROSTEP           13
-#define TK_ENERGYMOTOR         14
-#define TK_COMANDO             15  
-#define NUMTOKENS              16
+#define TK_DEINICIOAFINAL          0  
+#define TK_POSICIONSTART           1
+#define TK_POSICIONEND             2
+#define TK_MICRASENTREFOTOS        3
+#define TK_FACTORACELERATION       4
+#define TK_VEL_INICIAL             5
+#define TK_VEL_FINAL               6
+#define TK_TIMEBEFORESHOOT         7
+#define TK_TIMEAFTERSHOOT          8
+#define TK_SPEEDMOTOR              9
+#define TK_DIRMOTOR                10
+#define TK_NUMSTEP                 11
+#define TK_GOPOSITION              12
+#define TK_SAVEPSOTION             13
+#define TK_MICROSTEP               14
+#define TK_ENERGYMOTOR             15
+#define TK_COMANDO                 16  // Hexadecimal que indica función
+#define NUMTOKENS                  17  // Número de Tokens en total
+//Constanes con referencias a Funciones que si son iguales que TK_COMANDO se ejecutan
+#define CMD_MOVERMOTOR             0x00000001    //   0000 0000 0000 0000 0000 0000 0000 0001
+#define CMD_STACK                  0x00000002    //   0000 0000 0000 0000 0000 0000 0000 0010
+#define CMD_SAVEPOSITION           0x00000004    //   0000 0000 0000 0000 0000 0000 0000 0100
+#define CMD_STACKED                0x00000008    //   0000 0000 0000 0000 0000 0000 0000 1000
+#define CMD_GO_POSITION            0x00000010    //   0000 0000 0000 0000 0000 0000 0001 0000
+//                                 0x00000020    //   0000 0000 0000 0000 0000 0000 0010 0000
+#define CMD_GO_HOME                0x00000040    //   0000 0000 0000 0000 0000 0000 0100 0000
+#define CMD_ENERGYMOTOR            0x00000080    //   0000 0000 0000 0000 0000 0000 1000 0000
+//Constantes de gestión de cadena
+#define LEN_CADENA                 1024
+#define TOKEN                      '\n'  //Caracter para separar los tokens
+#define END_OF_MSSG                'T'   //Caracter para indicar el fin del mensaje enviado
+//Constantes para configurar el MicroStep del Nema17
 
-#define LEN_CADENA              1024
-
-#define CMD_MOVERMOTOR          0x00000001    //   0000 0000 0000 0000 0000 0000 0000 0001
-#define CMD_STOPMOTOR           0x00000002    //   0000 0000 0000 0000 0000 0000 0000 0010
-#define CMD_SAVEPOSITION        0x00000004    //   0000 0000 0000 0000 0000 0000 0000 0100
-#define CMD_STACKED             0x00000008    //   0000 0000 0000 0000 0000 0000 0000 1000
-#define CMD_GO_POSITION         0x00000010    //   0000 0000 0000 0000 0000 0000 0001 0000
-#define CMD_SET_CONFIG          0x00000020    //   0000 0000 0000 0000 0000 0000 0010 0000
-#define CMD_GO_HOME             0x00000040    //   0000 0000 0000 0000 0000 0000 0100 0000
-#define CMD_ENERGYMOTOR         0x00000080    //   0000 0000 0000 0000 0000 0000 1000 0000
-
-#define TOKEN                  '\n'
-#define END_OF_MSSG            'T'
-
+//Constantes para escribir y leer en la EEPROM del arduino
+#define EEPROM_ADDR_POSITION        0
+#define EEPROM_ADDR_VERIFY          (EEPROM_ADDR_POSITION + sizeof(position))
+#define EEPROM_VERIFY_FAIL          0x00
+#define EEPROM_VERIFY_SUCCESS       0xff
+//Constantes para configurar los pines del Arduino
+#define PIN_KEY                     2
+#define PIN_STEP                    9
+#define PIN_MS0                     4
+#define PIN_MS1                     3
+#define PIN_MS2                     5
+#define PIN_RESET                   6
+#define PIN_TX                      10
+#define PIN_RX                      11
+#define PIN_DIR                     8
+#define PIN_ENDSTOP                 13
+//Constantes para configurar NEMA17
 #define MICROSTEPS_SIXTEENTH        16
 #define MICROSTEPS_EIGHTH           8
 #define MICROSTEPS_QUARTER          4
 #define MICROSTEPS_HALF             2
 #define MICROSTEPS_FULL             1
-
-#define EEPROM_ADDR_POSITION   0
-#define EEPROM_ADDR_VERIFY     (EEPROM_ADDR_POSITION + sizeof(position))
-
-#define EEPROM_VERIFY_FAIL     0x00
-#define EEPROM_VERIFY_SUCCESS  0xff
-
-#define PIN_KEY                2
-#define PIN_STEP               9
-#define PIN_MS0                4
-#define PIN_MS1                3
-#define PIN_MS2                5
-#define PIN_RESET              6
-#define PIN_TX                 10
-#define PIN_RX                 11
-#define PIN_DIR                8
-#define PIN_ENDSTOP            13
-
-#define MAX_STRING_LEN         20
-
-#define DEFAULT_BACKLASS           5  //En micras
-#define DEFAULT_TYPEMOTOR          200
-#define DEFAULT_MICROSTEP          MICROSTEPS_FULL
-#define DEFAULT_SCREWSTEP          3
-#define DEFAULT_ACELERATION        1
-#define DEFAULT_SPEED_MAX          500
-#define DEFAULT_SPEED_MIN          600
-#define STEP_UNIT                  1
-#define DIR_POS_STEP               1
-#define DIR_NEG_STEP               0
-#define DistanceMinimal            1.27
-
-
+#define DEFAULT_ACELERATION         1
+#define DEFAULT_SPEED_MAX           500
+#define DEFAULT_SPEED_MIN           600
+#define STEP_UNIT                   1
+#define DIR_POS_STEP                1
+#define DIR_NEG_STEP                0
+#define DistanceMinimal             1.27
 /****************************************************************
 ------------------------Global Variables-------------------------------
 ****************************************************************/
-
-long          dato[NUMTOKENS];
-char          CadenaAscii[LEN_CADENA];
-unsigned long position;
-unsigned char verify_save;
-
-
+long                                dato[NUMTOKENS];
+char                                CadenaAscii[LEN_CADENA];
+unsigned long                       position;
+unsigned char                       verify_save;
 /****************************************************************
 ------------------------Bluetooth-------------------------------
 ****************************************************************/
-
-SoftwareSerial StackBlue(PIN_TX, PIN_RX);   //Se crea conexión serie StackBlue(Rx,Tx);
-
-
-
+//Se defina los pines TX y RX en la comunicación Bluetooth
+SoftwareSerial StackBlue(PIN_TX, PIN_RX);
+//Función envía la posición actual por Bluetooth al Smartphone
 void sendPosition()
 {
     float pos = ((float)(position) * DistanceMinimal) / (float)MICROSTEPS_SIXTEENTH;
     StackBlue.println(pos);
     Serial.println(pos);
 }
-
 /****************************************************************
 ------------------------Void Setup-------------------------------
 ****************************************************************/
-
 void setup()
 {
-  pinMode       (PIN_KEY,   OUTPUT);
-  digitalWrite  (PIN_KEY,   HIGH);
-  pinMode       (PIN_STEP,  OUTPUT);
-  pinMode       (                 PIN_RESET,      OUTPUT);
-  digitalWrite(            PIN_RESET,      HIGH);
-  pinMode(                 PIN_MS0,        OUTPUT);
-  pinMode(                 PIN_MS1,        OUTPUT);
-  pinMode(                 PIN_MS2,        OUTPUT);
-  pinMode(                 PIN_DIR,        OUTPUT);
-  pinMode(                 PIN_ENDSTOP,    INPUT);
-
-
-
-  StackBlue.begin(9600);            //Se configura velocidad de conexión de StackBlue
-  Serial.begin(9600);              //Se configura velocidad de conexión de Arduino-PC
-
-  //stepperResolution(DEFAULT_MICROSTEP);
-
-  memset(dato, 0, NUMTOKENS * sizeof(int)); //Limpia la memoria SRAM que ocupa la array datos de datos anteriores.
+//Configuracion de los pines del Arduino
+  pinMode       (PIN_STEP,       OUTPUT);
+  pinMode       (PIN_MS0,        OUTPUT);
+  pinMode       (PIN_MS1,        OUTPUT);
+  pinMode       (PIN_MS2,        OUTPUT);
+  pinMode       (PIN_DIR,        OUTPUT);
+  pinMode       (PIN_ENDSTOP,    INPUT);
+  pinMode       (PIN_KEY,        OUTPUT);
+      digitalWrite  (PIN_KEY,        HIGH);
+  pinMode       (PIN_RESET,      OUTPUT);
+      digitalWrite  (PIN_RESET,      HIGH);
+//Configuración de la velocidad de conexión de StackBlue-Smartphone
+  StackBlue.begin(9600);
+//Configuración de la velocidad de conexión Serie-Pc
+  Serial.begin(9600);
+//Limpia la memoria SRAM que ocupa la array datos de datos anteriores.
+  memset(dato, 0, NUMTOKENS * sizeof(int));
   memset(CadenaAscii, 0, LEN_CADENA * sizeof(char));
-
-  //Lee la posición de la última vez que se guardó en la EEPROM
-  //Lee la posición de la dirección EEPROM_ADDR_POSITION +1 y la desplaza 8 Bits a la izquierda y hace con ella un OR con lo que hay en la dirección EEPROM_ADDR_POSITION
+//Lee la posición de la última vez que se guardó en la EEPROM
+//Lee la posición de la dirección EEPROM_ADDR_POSITION +1 y la desplaza 8 Bits a la izquierda y hace con ella un OR con lo que hay en la dirección EEPROM_ADDR_POSITION
   position    = ((unsigned long)(EEPROM.read(EEPROM_ADDR_POSITION + 3)) << 24)
               | ((unsigned long)(EEPROM.read(EEPROM_ADDR_POSITION + 2)) << 16)
               | ((unsigned long)(EEPROM.read(EEPROM_ADDR_POSITION + 1)) << 8)
               |  (unsigned long)EEPROM.read(EEPROM_ADDR_POSITION);
-
-
-
-
-  // Grabamos en EEPROM la condicion de fallo de grabáción de posición
+// Grabamos en EEPROM la condicion de fallo de grabáción de posición
   EEPROM.write(EEPROM_ADDR_VERIFY, EEPROM_VERIFY_FAIL);
 
-  //getConfig();
 
-
-
-  //Establecemos la resolución del Motor
-  //stepperResolution(Get_MicroStep);
-
-  //Lee en la EEPROM si se grabó correctamente la posición de la plataforma en el último apagado
-  /*verify_save = EEPROM.read(EEPROM_ADDR_VERIFY);
-  //En el caso que no se grabó la position en el último apagado se resetea yendo al inicio (EndStop) y establecer a 0 la posición de la plataforma mediante la función GoHome()
+//Asigna a verify_save el valor que lee de la EEPROM (EEPROM_ADDR_VERIFY)
+  verify_save = EEPROM.read(EEPROM_ADDR_VERIFY);
+//Si verify_save tiene el mismo valor que EEPROM_VERIFY_FAIL no se guardó correctamenta en el anterior encendido por lo tanto irá a Home y establecerá a 0 position
   if(verify_save == EEPROM_VERIFY_FAIL)
   {
     // ERROR!! NO SE HA GRABADO BIEN
     goHome();
-  }*/
+  }
 }
-
 /****************************************************************
 ------------------------Void loop-------------------------------
 ****************************************************************/
@@ -295,12 +252,6 @@ void procesaComandos(void)
         //goPosition(dato[TK_GOPOSITION]);
     }
 
-    //-- 4. PROCESA SET CONFIG
-    if(cmd_flag & CMD_SET_CONFIG)
-    {
-        //setConfig(DEFAULT_BACKLASS, DEFAULT_TYPEMOTOR, DEFAULT_MICROSTEP, DEFAULT_SCREWSTEP);
-    }
-
     //-- 5. PROCESA GO HOME
     if(cmd_flag & CMD_GO_HOME)
     {
@@ -311,10 +262,10 @@ void procesaComandos(void)
     {
         digitalWrite(PIN_RESET, dato[TK_ENERGYMOTOR] > 0 ? HIGH : LOW);
     }
-    //-- 6. PROCESA STACKED
-    if(cmd_flag & CMD_STACKED)
+    //-- 6. PROCESA STACK
+    if(cmd_flag & CMD_STACK)
     {
-
+        Stack();
     }
 
     //-- Limpiamos todos los comandos menos el de mover motor
@@ -382,6 +333,42 @@ void MoveMotor(int MicroStep, int Dir, int NumSteps, int Velo_Inicial, int Velo_
 /************************************************************************************************************************
 *************************************************************************************************************************
 ************************************************************************************************************************/
+//***********************************************************************************************************************
+
+
+
+
+void Stack()
+{
+
+}
+
+void goPosition()
+{
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//************************************************************************************************************************
 void goHome()
 {
    while (digitalRead(PIN_ENDSTOP)== LOW)
@@ -445,77 +432,7 @@ void stepperResolution(char resolution)
    digitalWrite(PIN_MS2, LOW);
   }
 }
-//-----------------------------------------------------------------------------------------------------
 
-
-
-/*void stacked()
-{
- goPosition(dato[TK_STARTSTACKED]);
-
-
-
-
-            /*  dato[TK_ENDSTACKED],
-              dato[TK_DIRMOTOR],
-              dato[TK_USERDISTANCE],
-              dato[TK_NUMPHOTOS],
-              dato[TK_TIMEAFTERSHOOT],
-              dato[TK_DISTANCEPHOTO],
-              dato[TK_ENDSTACKED],
-              dato[TK_ENDSTACKED],
-              dato[TK_ENDSTACKED],
-              dato[TK_ENDSTACKED],
-              dato[TK_ENDSTACKED],*/
-
-//}
-//-----------------------------------------------------------------------------------------------------
-
-int distance()
-{
-}
-//-----------------------------------------------------------------------------------------------------
-
-int setStarStacked(int setStart)
-{
-}
-//-----------------------------------------------------------------------------------------------------
-
-/*void goPosition(int goPosition)
-{
-    int dir = dato[TK_GOPOSITION] > position ? DIR_POS_STEP : DIR_NEG_STEP;
-    while(goPosition != position)
-    {
-        int Acc;
-        MoveMotor(DEFAULT_SPEED, dir, STEP_UNIT, dato[TK_FACTORACELERATION]);
-    }
-}*/
-//-----------------------------------------------------------------------------------------------------
-
-/*void getConfig()
-{
-  Get_BackLass  = EEPROM.read(EEPROM_ADDR_BACKLASS);
-  Get_TypeMotor = ((int)EEPROM.read(EEPROM_ADDR_TYPEMOTOR)) * 10;
-  Get_MicroStep = EEPROM.read(EEPROM_ADDR_MICROSTEP);
-  Get_ScrewStep = ((int)EEPROM.read(EEPROM_ADDR_SCREWSTEP)) | (((int)EEPROM.read(EEPROM_ADDR_SCREWSTEP + 1)) << 8);
-
-  Steps_Revolution = Get_TypeMotor * Get_MicroStep;
-
-  Dist_Step = Get_ScrewStep / Steps_Revolution;
-}*/
-//-----------------------------------------------------------------------------------------------------
-
-/*void setConfig(int BackLass, int TypeMotor, int MicroStep, int ScrewStep)
-{
-  EEPROM.write(EEPROM_ADDR_BACKLASS, BackLass);
-  EEPROM.write(EEPROM_ADDR_TYPEMOTOR, TypeMotor / 10);
-  EEPROM.write(EEPROM_ADDR_MICROSTEP, MicroStep);
-  EEPROM.write(EEPROM_ADDR_SCREWSTEP, (char)ScrewStep);
-  EEPROM.write(EEPROM_ADDR_SCREWSTEP + 1, (char)(ScrewStep >> 8));
-
-  getConfig();
-}*/
-//-----------------------------------------------------------------------------------------------------
 
 void eepromSaveVerify(unsigned char valor)
 {
