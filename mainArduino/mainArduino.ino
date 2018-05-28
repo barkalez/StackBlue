@@ -46,7 +46,7 @@ AUTOR: Barkalez
 ------------------------Constantes-------------------------------
 ****************************************************************/
 //Parámetros recibidos por Bluetooth
-#define TK_DEINICIOAFINAL          0  
+#define TK_DEINICIOAFINAL          0
 #define TK_POSICIONSTART           1
 #define TK_POSICIONEND             2
 #define TK_MICRASENTREFOTOS        3
@@ -108,6 +108,7 @@ AUTOR: Barkalez
 #define DIR_POS_STEP                1
 #define DIR_NEG_STEP                0
 #define DistanceMinimal             1.27
+#define Micras_Unit                 0.714375
 /****************************************************************
 ------------------------Global Variables-------------------------------
 ****************************************************************/
@@ -163,11 +164,11 @@ void setup()
 //Asigna a verify_save el valor que lee de la EEPROM (EEPROM_ADDR_VERIFY)
   verify_save = EEPROM.read(EEPROM_ADDR_VERIFY);
 //Si verify_save tiene el mismo valor que EEPROM_VERIFY_FAIL no se guardó correctamenta en el anterior encendido por lo tanto irá a Home y establecerá a 0 position
-  if(verify_save == EEPROM_VERIFY_FAIL)
+  /*if(verify_save == EEPROM_VERIFY_FAIL)
   {
     // ERROR!! NO SE HA GRABADO BIEN
     goHome();
-  }
+  }*/
 }
 /****************************************************************
 ------------------------Void loop-------------------------------
@@ -249,7 +250,7 @@ void procesaComandos(void)
     //-- 3. PROCESA GO TO POSITION
     if(cmd_flag & CMD_GO_POSITION)
     {
-        //goPosition(dato[TK_GOPOSITION]);
+        goPosition(dato[TK_GOPOSITION]);
     }
 
     //-- 5. PROCESA GO HOME
@@ -263,7 +264,7 @@ void procesaComandos(void)
         digitalWrite(PIN_RESET, dato[TK_ENERGYMOTOR] > 0 ? HIGH : LOW);
     }
     //-- 6. PROCESA STACK
-    if(cmd_flag & CMD_STACK)
+    if(cmd_flag & CMD_STACKED)
     {
         Stack();
     }
@@ -340,12 +341,78 @@ void MoveMotor(int MicroStep, int Dir, int NumSteps, int Velo_Inicial, int Velo_
 
 void Stack()
 {
+  float MicrasEntreFotos  =  dato[TK_MICRASENTREFOTOS] / 100;
+  float PosicionStart     =  dato[TK_POSICIONSTART]    / 100;
+  float PosicionEnd       =  dato[TK_POSICIONEND]      / 100;
+
+  float LongApilado = PosicionStart - PosicionEnd;
+  float a = MicrasEntreFotos / Micras_Unit;
+  round (a);
+  float Mfr = a * Micras_Unit;
+  int FT = LongApilado / Mfr;
+  int NP = Mfr / Micras_Unit;
+
+Serial.println("Entra en funcion Stack");
+  if(dato[TK_DEINICIOAFINAL] == 1)
+  {
+Serial.println("Entra en TK_DEINICIOAFINAL 1");
+
+        goPosition(PosicionStart);
+        delayMicroseconds(dato[TK_TIMEBEFORESHOOT]);
+        for(int i= 0; i< FT; ++i)
+        {
+Serial.println("Mueve motor x veces, esto se repite mucho");
+
+         MoveMotor(dato[TK_MICROSTEP], DIR_POS_STEP, dato[TK_NUMSTEP], dato[TK_VEL_INICIAL], dato[TK_VEL_FINAL], dato[TK_FACTORACELERATION]);
+         delayMicroseconds(dato[TK_TIMEBEFORESHOOT]);
+         //Aquí va el disparo de la cámara de fotos
+         //Aquí va el disparo de los flashes si hiciera falta
+         delayMicroseconds(dato[TK_TIMEAFTERSHOOT]);
+
+        }
+
+  }
+  if(dato[TK_DEINICIOAFINAL] == 0)
+  {
+Serial.println("Entra en TK_DEINICIOAFINAL 0");
+
+        goPosition(PosicionEnd);
+        delayMicroseconds(dato[TK_TIMEBEFORESHOOT]);
+
+        for(int i= 0; i< FT; ++i)
+        {
+Serial.println("Mueve motor x veces, esto se repite mucho");
+         MoveMotor(dato[TK_MICROSTEP], DIR_NEG_STEP, NP, dato[TK_VEL_INICIAL], dato[TK_VEL_FINAL], dato[TK_FACTORACELERATION]);
+         delayMicroseconds(dato[TK_TIMEBEFORESHOOT]);
+         //Aquí va el disparo de la cámara de fotos
+         //Aquí va el disparo de los flashes si hiciera falta
+         delayMicroseconds(dato[TK_TIMEAFTERSHOOT]);
+        }
+  }
 
 }
 
-void goPosition()
+void goPosition(float destino)
 {
+Serial.println("Entra en goPosition");
 
+  float pos = ((float)(position) * DistanceMinimal) / (float)MICROSTEPS_SIXTEENTH;
+  if(pos < destino)
+  {
+    while(pos < destino)
+    {
+      Serial.println(pos);
+      Serial.println(destino);
+      MoveMotor(MICROSTEPS_SIXTEENTH, DIR_POS_STEP,STEP_UNIT, DEFAULT_SPEED_MIN, DEFAULT_SPEED_MAX, DEFAULT_ACELERATION);
+    }
+  }
+  else if(pos > destino)
+  {
+    while(pos < destino)
+    {
+      MoveMotor(MICROSTEPS_SIXTEENTH, DIR_NEG_STEP,STEP_UNIT, DEFAULT_SPEED_MIN, DEFAULT_SPEED_MAX, DEFAULT_ACELERATION);
+    }
+  }
 
 }
 
