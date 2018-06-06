@@ -107,16 +107,17 @@ AUTOR: Barkalez
 #define STEP_UNIT                   1
 #define DIR_POS_STEP                1
 #define DIR_NEG_STEP                0
-#define DistanceMinimal             1.27
+#define DistanceMinimal             1.270000
 #define Micras_Unit                 0.714375
 /****************************************************************
 ------------------------Global Variables-------------------------------
 ****************************************************************/
 long                                dato[NUMTOKENS];
 char                                CadenaAscii[LEN_CADENA];
-float                               position;
+unsigned long                       position;
 unsigned char                       verify_save;
-float                               pos;
+double                              pos;
+
 /****************************************************************
 ------------------------Bluetooth-------------------------------
 ****************************************************************/
@@ -126,6 +127,10 @@ SoftwareSerial StackBlue(PIN_TX, PIN_RX);
 void sendPosition()
 {
     pos = ((float)(position) * DistanceMinimal) / (float)MICROSTEPS_SIXTEENTH;
+    //pos = position * 0.079375;
+    //pos = 1.42875;
+    //pos = pos * 1000000;
+    //int(pos);
     StackBlue.println(pos);
     Serial.println(pos);
 }
@@ -316,26 +321,9 @@ void MoveMotor(int MicroStep, int Dir, int NumSteps, int Velo_Inicial, int Velo_
         delayMicroseconds(vel);
     }
 
-    //digitalWrite(PIN_RESET,LOW);
-
     //-- Calculamos la distancia en 1/16 de paso del carro desde el cero
-    unsigned long pos_aux = (i * MICROSTEPS_SIXTEENTH) / dato[TK_MICROSTEP];
-    position += (Dir > 0 ? 1 : -1) * pos_aux;
-
-    //pos = ((float)(position) * DistanceMinimal) / (float)MICROSTEPS_SIXTEENTH;
-    pos = (position * DistanceMinimal) / MICROSTEPS_SIXTEENTH;
-Serial.println(pos);
-
-    //-- Enviamos la posicion en micras a MitApp
-    /*if((position % 1200) == 0)
-        sendPosition();*/
-
-    //StackBlue.println(position);
-    //Serial.println(position);
-
-    //position += ((Dir > 0 ? 1 : -1) * 200 * NumSteps);
-    // actualizamos la eeprom diciendo que el valor almacenado de position no es correcto (acabamos de movernos)
-    //eepromSaveVerify(EEPROM_VERIFY_FAIL);
+   unsigned long pos_aux = (i * MICROSTEPS_SIXTEENTH) / dato[TK_MICROSTEP];
+   position += (Dir > 0 ? 1 : -1) * pos_aux;
 }
 /************************************************************************************************************************
 *************************************************************************************************************************
@@ -353,18 +341,24 @@ void Stack()
   PosicionStart           =  PosicionStart / 100;
   float PosicionEnd       =  dato[TK_POSICIONEND];
   PosicionEnd             =  PosicionEnd / 100;
-
-  float LongApilado = PosicionEnd - PosicionStart;
-  float a = MicrasEntreFotos / Micras_Unit;
-  round (a);
-  float Mfr = a * Micras_Unit;
-  int FT = LongApilado / Mfr;
-  int NP = Mfr / Micras_Unit;
-  int NPT = NP * dato[TK_NUMSTEP];
+  
+  MicrasEntreFotos        = MicrasEntreFotos / Micras_Unit;
+  MicrasEntreFotos        = round(MicrasEntreFotos) * Micras_Unit;
+  PosicionStart           = PosicionStart / Micras_Unit;
+  PosicionStart           = round(PosicionStart) * Micras_Unit;
+  PosicionEnd             = PosicionEnd / Micras_Unit;
+  PosicionEnd             = round(PosicionEnd) * Micras_Unit;
+    
+  float LongApilado       = PosicionEnd - PosicionStart;
+  MicrasEntreFotos        = MicrasEntreFotos + 0.5;
+  int FT                  = LongApilado / MicrasEntreFotos;
+  FT = FT + 1;
+  int NP                  = MicrasEntreFotos / Micras_Unit;
+  int NPT                 = NP * FT;
 
 Serial.println("Entra en funcion Stack");
 
-/*Serial.println("Imprime TK_MICRASENTREFOTOS");
+Serial.println("Imprime TK_MICRASENTREFOTOS");
 Serial.println(dato[TK_MICRASENTREFOTOS]);
 Serial.println();
 Serial.println("Imprime MicrasEntreFotos");
@@ -385,14 +379,10 @@ Serial.println();
 Serial.println("LongApilado = PosicionEnd - PosicionStart");
 Serial.println(LongApilado);
 Serial.println();
-Serial.println("Se busca el múltiplo de 0,714375");
-Serial.println("MicrasEntreFotos / Micras_Unit");
-Serial.println("Se redondea y se vuelve a multiplicar por 0,714375");
-Serial.println(Mfr);
-Serial.println();
 Serial.println("Fotos = Mfr / Micras_Unit");
 Serial.println(FT);
-Serial.println();*/
+Serial.println("Numero de pasos entre fotos");
+Serial.println(NP);
 Serial.println("Numero de pasos totales");
 Serial.println(NPT);
 
@@ -408,7 +398,7 @@ Serial.println(NPT);
 
 
 
-  if(dato[TK_DEINICIOAFINAL] == 1)
+  /*if(dato[TK_DEINICIOAFINAL] == 1)
   {
 Serial.println("Va de Inicio a Final");
 
@@ -443,7 +433,7 @@ Serial.println("Mueve motor x veces, esto se repite mucho");
          //Aquí va el disparo de los flashes si hiciera falta
          delayMicroseconds(dato[TK_TIMEAFTERSHOOT]);
         }
-  }
+  }*/
 
 }
 
