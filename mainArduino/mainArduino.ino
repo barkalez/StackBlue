@@ -104,7 +104,7 @@ AUTOR: Barkalez
 #define DEFAULT_ACELERATION         1
 #define DEFAULT_SPEED_MAX           500
 #define DEFAULT_SPEED_MIN           600
-#define STEP_UNIT                   1
+#define STEP_UNIT                   9
 #define DIR_POS_STEP                1
 #define DIR_NEG_STEP                0
 #define DistanceMinimal             1.270000
@@ -320,10 +320,14 @@ void MoveMotor(int MicroStep, int Dir, int NumSteps, int Velo_Inicial, int Velo_
         digitalWrite(PIN_STEP, LOW);
         delayMicroseconds(vel);
     }
+    
+    
 
     //-- Calculamos la distancia en 1/16 de paso del carro desde el cero
    unsigned long pos_aux = (i * MICROSTEPS_SIXTEENTH) / dato[TK_MICROSTEP];
    position += (Dir > 0 ? 1 : -1) * pos_aux;
+   
+   pos = ((float)(position) * DistanceMinimal) / (float)MICROSTEPS_SIXTEENTH;
 }
 /************************************************************************************************************************
 *************************************************************************************************************************
@@ -334,133 +338,152 @@ void MoveMotor(int MicroStep, int Dir, int NumSteps, int Velo_Inicial, int Velo_
 
 
 void Stack()
-{
-  float MicrasEntreFotos  =  dato[TK_MICRASENTREFOTOS];
-  MicrasEntreFotos        =  MicrasEntreFotos / 100;
-  float PosicionStart     =  dato[TK_POSICIONSTART];
-  PosicionStart           =  PosicionStart / 100;
-  float PosicionEnd       =  dato[TK_POSICIONEND];
-  PosicionEnd             =  PosicionEnd / 100;
-  
-  MicrasEntreFotos        = MicrasEntreFotos / Micras_Unit;
-  MicrasEntreFotos        = round(MicrasEntreFotos) * Micras_Unit;
-  PosicionStart           = PosicionStart / Micras_Unit;
-  PosicionStart           = round(PosicionStart) * Micras_Unit;
-  PosicionEnd             = PosicionEnd / Micras_Unit;
-  PosicionEnd             = round(PosicionEnd) * Micras_Unit;
-    
-  float LongApilado       = PosicionEnd - PosicionStart;
-  MicrasEntreFotos        = MicrasEntreFotos + 0.5;
-  int FT                  = LongApilado / MicrasEntreFotos;
-  FT = FT + 1;
-  int NP                  = MicrasEntreFotos / Micras_Unit;
-  int NPT                 = NP * FT;
+            {
+              Serial.println("Entra en funcion Stack");
+              
+              float MicrasEntreFotos  =  dato[TK_MICRASENTREFOTOS];
+              MicrasEntreFotos        =  MicrasEntreFotos / 100;
+              float PosicionStart     =  dato[TK_POSICIONSTART];
+              PosicionStart           =  PosicionStart / 100;
+              float PosicionEnd       =  dato[TK_POSICIONEND];
+              PosicionEnd             =  PosicionEnd / 100;
+              
+              MicrasEntreFotos        = MicrasEntreFotos / Micras_Unit;
+              MicrasEntreFotos        = round(MicrasEntreFotos) * Micras_Unit;
+              PosicionStart           = PosicionStart / Micras_Unit;
+              PosicionStart           = round(PosicionStart) * Micras_Unit;
+              PosicionEnd             = PosicionEnd / Micras_Unit;
+              PosicionEnd             = round(PosicionEnd) * Micras_Unit;
+                
+              float LongApilado       = PosicionEnd - PosicionStart;
+              MicrasEntreFotos        = MicrasEntreFotos + 0.5;
+              int FT                  = LongApilado / MicrasEntreFotos;
+              FT = FT + 1;
+              int NP                  = MicrasEntreFotos / Micras_Unit;
+              int NPT                 = NP * FT;
+            
+              
+              
+              if(dato[TK_DEINICIOAFINAL] == 0)
+                          {
+                            Serial.println("Va de Inicio a Final");
+                            goPosition(PosicionStart);
+                            
+                          }  
+              /*for(int i= 0; i< FT; ++i)
+                          {
+                           Serial.println("Mueve motor x veces, esto se repite mucho");
+                           MoveMotor(dato[TK_MICROSTEP], DIR_POS_STEP, NPT, dato[TK_VEL_INICIAL], dato[TK_VEL_FINAL], dato[TK_FACTORACELERATION]);
+                           delayMicroseconds(dato[TK_TIMEBEFORESHOOT]);
+                           //Aquí va el disparo de la cámara de fotos
+                           //Aquí va el disparo de los flashes si hiciera falta
+                           delayMicroseconds(dato[TK_TIMEAFTERSHOOT]);
+                          }*/
+                         
+              if(dato[TK_DEINICIOAFINAL] == 1)
+                          {
+                            Serial.println("Va de Final a Inicio");
+                            goPosition(PosicionEnd);
+                          }
+                            
+              /*for(int i= 0; i< FT; ++i)
+                          {
+                           Serial.println("Mueve motor x veces, esto se repite mucho");
+                           MoveMotor(dato[TK_MICROSTEP], DIR_NEG_STEP, NPT, dato[TK_VEL_INICIAL], dato[TK_VEL_FINAL], dato[TK_FACTORACELERATION]);
+                           delayMicroseconds(dato[TK_TIMEBEFORESHOOT]);
+                           //Aquí va el disparo de la cámara de fotos
+                           //Aquí va el disparo de los flashes si hiciera falta
+                           delayMicroseconds(dato[TK_TIMEAFTERSHOOT]);
+                          }*/
+                          
 
-Serial.println("Entra en funcion Stack");
-
-Serial.println("Imprime TK_MICRASENTREFOTOS");
+/*Serial.println("Imprime TK_MICRASENTREFOTOS");
 Serial.println(dato[TK_MICRASENTREFOTOS]);
 Serial.println();
+delay(dato[TK_TIMEBEFORESHOOT]);
 Serial.println("Imprime MicrasEntreFotos");
 Serial.println(MicrasEntreFotos);
 Serial.println();
+delay(dato[TK_TIMEBEFORESHOOT]);
 Serial.println("Imprime TK_POSICIONSTART");
 Serial.println(dato[TK_POSICIONSTART]);
 Serial.println();
+delay(dato[TK_TIMEBEFORESHOOT]);
 Serial.println("Imprime PosicionStart");
 Serial.println(PosicionStart);
 Serial.println();
+delay(dato[TK_TIMEBEFORESHOOT]);
 Serial.println("Imprime TK_POSICIONEND");
 Serial.println(dato[TK_POSICIONEND]);
 Serial.println();
+delay(dato[TK_TIMEBEFORESHOOT]);
 Serial.println("Imprime PosicionEnd");
 Serial.println(PosicionEnd);
 Serial.println();
+delay(dato[TK_TIMEBEFORESHOOT]);
 Serial.println("LongApilado = PosicionEnd - PosicionStart");
 Serial.println(LongApilado);
 Serial.println();
+delay(dato[TK_TIMEBEFORESHOOT]);
 Serial.println("Fotos = Mfr / Micras_Unit");
 Serial.println(FT);
+Serial.println();
+delay(dato[TK_TIMEBEFORESHOOT]);
 Serial.println("Numero de pasos entre fotos");
 Serial.println(NP);
+Serial.println();
+delay(dato[TK_TIMEBEFORESHOOT]);
 Serial.println("Numero de pasos totales");
 Serial.println(NPT);
-
-
-
-
-
-
-
-
-
-
-
-
-
-  /*if(dato[TK_DEINICIOAFINAL] == 1)
-  {
-Serial.println("Va de Inicio a Final");
-
-        goPosition(PosicionStart);
-        delayMicroseconds(dato[TK_TIMEBEFORESHOOT]);
-        for(int i= 0; i< FT; ++i)
-        {
-Serial.println("Mueve motor x veces, esto se repite mucho");
-
-         MoveMotor(dato[TK_MICROSTEP], DIR_POS_STEP, NPT, dato[TK_VEL_INICIAL], dato[TK_VEL_FINAL], dato[TK_FACTORACELERATION]);
-         delayMicroseconds(dato[TK_TIMEBEFORESHOOT]);
-         //Aquí va el disparo de la cámara de fotos
-         //Aquí va el disparo de los flashes si hiciera falta
-         delayMicroseconds(dato[TK_TIMEAFTERSHOOT]);
-
-        }
-
-  }
-  if(dato[TK_DEINICIOAFINAL] == 0)
-  {
-Serial.println("Entra en TK_DEINICIOAFINAL 0");
-
-        goPosition(PosicionEnd);
-        delayMicroseconds(dato[TK_TIMEBEFORESHOOT]);
-
-        for(int i= 0; i< FT; ++i)
-        {
-Serial.println("Mueve motor x veces, esto se repite mucho");
-         MoveMotor(dato[TK_MICROSTEP], DIR_NEG_STEP, NPT, dato[TK_VEL_INICIAL], dato[TK_VEL_FINAL], dato[TK_FACTORACELERATION]);
-         delayMicroseconds(dato[TK_TIMEBEFORESHOOT]);
-         //Aquí va el disparo de la cámara de fotos
-         //Aquí va el disparo de los flashes si hiciera falta
-         delayMicroseconds(dato[TK_TIMEAFTERSHOOT]);
-        }
-  }*/
+Serial.println();
+delay(dato[TK_TIMEBEFORESHOOT]);
+Serial.println("Tiempo antes de foto");
+Serial.println(dato[TK_TIMEBEFORESHOOT]);
+Serial.println("Tiempo despues de foto");
+Serial.println(dato[TK_TIMEAFTERSHOOT]);
+Serial.println("Posicion");
+Serial.println(pos);
+Serial.println();
+delay(dato[TK_TIMEBEFORESHOOT]);*/
 
 }
 
 void goPosition(float destino)
-{
-Serial.println("Entra en goPosition");
-sendPosition();
-Serial.println(destino);
-Serial.println(dato[TK_MICRASENTREFOTOS]);
+                {
+                 Serial.println("Entra en goPosition");
 
-
-  if(pos < destino)
-    {
-        while(pos < destino)
-        {
-          Serial.println(pos);
-          Serial.println(destino);
-          MoveMotor(MICROSTEPS_SIXTEENTH, DIR_POS_STEP,STEP_UNIT, DEFAULT_SPEED_MIN, DEFAULT_SPEED_MAX, DEFAULT_ACELERATION);
-        }
-    }
-  else if(pos > destino)
-    {
-        while(pos < destino)
-        {
-          MoveMotor(MICROSTEPS_SIXTEENTH, DIR_NEG_STEP,STEP_UNIT, DEFAULT_SPEED_MIN, DEFAULT_SPEED_MAX, DEFAULT_ACELERATION);
-        }
-    }
+                 if(pos < destino)
+                           {
+                             Serial.println("Destino Mayor que Pos");
+                             Serial.println(pos);
+                             Serial.println(destino);
+                             while(pos < destino)
+                                       {
+                                        Serial.println(pos);
+                                        Serial.println(destino);
+                                        MoveMotor(MICROSTEPS_SIXTEENTH, DIR_POS_STEP,STEP_UNIT, DEFAULT_SPEED_MIN, DEFAULT_SPEED_MAX, DEFAULT_ACELERATION);
+                                       }
+                             Serial.println(pos);
+                             Serial.println(destino);
+                             
+                           }
+             delay(1000);
+                     
+                 if(pos > destino)
+                           {
+                             Serial.println("Destino Menor que Pos");
+                             Serial.println(pos);
+                             Serial.println(destino);
+                             while(pos > destino)
+                                      {
+                                       Serial.println(pos);
+                                       Serial.println(destino);
+                                       MoveMotor(MICROSTEPS_SIXTEENTH, DIR_NEG_STEP,STEP_UNIT, DEFAULT_SPEED_MIN, DEFAULT_SPEED_MAX, DEFAULT_ACELERATION);
+                                      }
+                             Serial.println(pos);
+                             Serial.println(destino);
+                            }
+                            sendPosition();
 
 }
 
@@ -509,7 +532,6 @@ void goHome()
 {
   float aux1 = Steps_Revolution * dato[TK_USERDISTANCE] / Get_ScrewStep;
   int numSteps = round(aux1);
-
   return numSteps;
 }*/
 //-----------------------------------------------------------------------------------------------------
