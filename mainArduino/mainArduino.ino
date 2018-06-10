@@ -107,8 +107,8 @@ AUTOR: Barkalez
 #define STEP_UNIT                   9
 #define DIR_POS_STEP                1
 #define DIR_NEG_STEP                0
-#define DistanceMinimal             1.270000
-#define Micras_Unit                 0.714375
+#define DistanceMinimal             1.270
+#define Micras_Unit                 0.714
 /****************************************************************
 ------------------------Global Variables-------------------------------
 ****************************************************************/
@@ -116,7 +116,7 @@ long                                dato[NUMTOKENS];
 char                                CadenaAscii[LEN_CADENA];
 unsigned long                       position;
 unsigned char                       verify_save;
-double                              pos;
+float                               pos;
 
 /****************************************************************
 ------------------------Bluetooth-------------------------------
@@ -126,13 +126,17 @@ SoftwareSerial StackBlue(PIN_TX, PIN_RX);
 //Función envía la posición actual por Bluetooth al Smartphone
 void sendPosition()
 {
+   
     pos = ((float)(position) * DistanceMinimal) / (float)MICROSTEPS_SIXTEENTH;
-    //pos = position * 0.079375;
-    //pos = 1.42875;
-    //pos = pos * 1000000;
-    //int(pos);
-    StackBlue.println(pos);
-    Serial.println(pos);
+    //pos = (float)position * Micras_Unit;
+    pos = pos*1000;
+    trunc(pos);
+    pos = pos/1000;
+    
+    
+    StackBlue.println(pos,DEC);
+    Serial.println(pos, DEC);
+
 }
 /****************************************************************
 ------------------------Void Setup-------------------------------
@@ -356,11 +360,11 @@ void Stack()
               PosicionEnd             = round(PosicionEnd) * Micras_Unit;
                 
               float LongApilado       = PosicionEnd - PosicionStart;
-              MicrasEntreFotos        = MicrasEntreFotos + 0.5;
+              MicrasEntreFotos        = MicrasEntreFotos;
               int FT                  = LongApilado / MicrasEntreFotos;
-              FT = FT + 1;
-              int NP                  = MicrasEntreFotos / Micras_Unit;
-              int NPT                 = NP * FT;
+              FT = FT;
+              int NPEF                = (MicrasEntreFotos / Micras_Unit) * 9;
+              int NPT                 = NPEF * FT;
             
               
               
@@ -369,33 +373,37 @@ void Stack()
                             Serial.println("Va de Inicio a Final");
                             goPosition(PosicionStart);
                             
+                            for(int i= 0; i< FT; ++i)
+                                    {
+                                     Serial.print("Mueve motor "); Serial.print(FT); Serial.println(" veces");
+                                     MoveMotor(dato[TK_MICROSTEP], DIR_POS_STEP, NPEF, dato[TK_VEL_INICIAL], dato[TK_VEL_FINAL], dato[TK_FACTORACELERATION]);
+                                     delay(dato[TK_TIMEBEFORESHOOT]);
+                                     Serial.println("Fotazaaaa");
+                                     Serial.println("Flashazoooo");
+                                     sendPosition();
+                                     delay(dato[TK_TIMEAFTERSHOOT]);
+                                    }
+                            
                           }  
-              /*for(int i= 0; i< FT; ++i)
-                          {
-                           Serial.println("Mueve motor x veces, esto se repite mucho");
-                           MoveMotor(dato[TK_MICROSTEP], DIR_POS_STEP, NPT, dato[TK_VEL_INICIAL], dato[TK_VEL_FINAL], dato[TK_FACTORACELERATION]);
-                           delayMicroseconds(dato[TK_TIMEBEFORESHOOT]);
-                           //Aquí va el disparo de la cámara de fotos
-                           //Aquí va el disparo de los flashes si hiciera falta
-                           delayMicroseconds(dato[TK_TIMEAFTERSHOOT]);
-                          }*/
-                         
+                                      
               if(dato[TK_DEINICIOAFINAL] == 1)
                           {
                             Serial.println("Va de Final a Inicio");
                             goPosition(PosicionEnd);
+                            for(int i= 0; i< FT; ++i)
+                                  {
+                                   Serial.print("Mueve motor "); Serial.print(FT); Serial.println(" veces");
+                                   MoveMotor(dato[TK_MICROSTEP], DIR_NEG_STEP, NPEF, dato[TK_VEL_INICIAL], dato[TK_VEL_FINAL], dato[TK_FACTORACELERATION]);
+                                   delay(dato[TK_TIMEBEFORESHOOT]);
+                                   Serial.println("Fotazaaaa");
+                                   Serial.println("Flashazoooo");
+                                   sendPosition();
+                                   delay(dato[TK_TIMEAFTERSHOOT]);
+                                  }
                           }
                             
-              /*for(int i= 0; i< FT; ++i)
-                          {
-                           Serial.println("Mueve motor x veces, esto se repite mucho");
-                           MoveMotor(dato[TK_MICROSTEP], DIR_NEG_STEP, NPT, dato[TK_VEL_INICIAL], dato[TK_VEL_FINAL], dato[TK_FACTORACELERATION]);
-                           delayMicroseconds(dato[TK_TIMEBEFORESHOOT]);
-                           //Aquí va el disparo de la cámara de fotos
-                           //Aquí va el disparo de los flashes si hiciera falta
-                           delayMicroseconds(dato[TK_TIMEAFTERSHOOT]);
-                          }*/
-                          
+                           
+                         sendPosition(); 
 
 /*Serial.println("Imprime TK_MICRASENTREFOTOS");
 Serial.println(dato[TK_MICRASENTREFOTOS]);
